@@ -38,14 +38,30 @@ class CosyVoiceFrontEnd:
                  allowed_special: str = 'all'):
         self.tokenizer = get_tokenizer()
         self.feat_extractor = feat_extractor
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            self.device = torch.device('cuda')
+        elif torch.backends.mps.is_available():
+            self.device = torch.device('mps')
+        else:
+            self.device = torch.device('cpu')
         option = onnxruntime.SessionOptions()
         option.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
         option.intra_op_num_threads = 1
         self.campplus_session = onnxruntime.InferenceSession(campplus_model, sess_options=option, providers=["CPUExecutionProvider"])
+
+        # Determine ONNX providers based on available hardware
+        speech_tokenizer_providers = ["CPUExecutionProvider"]
+        if torch.cuda.is_available():
+            speech_tokenizer_providers = ["CUDAExecutionProvider"]
+        elif torch.backends.mps.is_available():
+            # Try to use CoreML if available on macOS, otherwise CPU
+            if 'CoreMLExecutionProvider' in onnxruntime.get_available_providers():
+                speech_tokenizer_providers = ["CoreMLExecutionProvider", "CPUExecutionProvider"]
+            else:
+                 speech_tokenizer_providers = ["CPUExecutionProvider"]
+
         self.speech_tokenizer_session = onnxruntime.InferenceSession(speech_tokenizer_model, sess_options=option,
-                                                                     providers=["CUDAExecutionProvider" if torch.cuda.is_available() else
-                                                                                "CPUExecutionProvider"])
+                                                                     providers=speech_tokenizer_providers)
         if os.path.exists(spk2info):
             self.spk2info = torch.load(spk2info, map_location=self.device, weights_only=True)
         else:

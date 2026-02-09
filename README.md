@@ -164,7 +164,7 @@ conda activate cosyvoice_vllm
 pip install vllm==v0.9.0 transformers==4.51.3 numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
 # for vllm>=0.11.0
 pip install vllm==v0.11.0 transformers==4.57.1 numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
-python vllm_example.py
+python vllm.py
 ```
 
 #### Start web demo

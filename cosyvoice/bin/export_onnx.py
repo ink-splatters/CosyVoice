@@ -90,7 +90,12 @@ def main():
     option = onnxruntime.SessionOptions()
     option.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_ENABLE_ALL
     option.intra_op_num_threads = 1
-    providers = ['CUDAExecutionProvider' if torch.cuda.is_available() else 'CPUExecutionProvider']
+    if torch.cuda.is_available():
+        providers = ['CUDAExecutionProvider']
+    elif 'CoreMLExecutionProvider' in onnxruntime.get_available_providers():
+        providers = ['CoreMLExecutionProvider', 'CPUExecutionProvider']
+    else:
+        providers = ['CPUExecutionProvider']
     estimator_onnx = onnxruntime.InferenceSession('{}/flow.decoder.estimator.fp32.onnx'.format(args.model_dir),
                                                   sess_options=option, providers=providers)
 
